@@ -4,6 +4,39 @@ from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import tkinter
 
+def recv_file():
+    print("file request from ")
+    fname = client_socket.recv(BUFSIZ).decode("utf8")
+    print ("recieving file " + fname )
+    fsize = client_socket.recv(BUFSIZ)
+    fsize = int(fsize)
+    data_len = 0
+    print("fsize: {}".format(fsize))
+    local_file = "../received_files/" + fname
+    with open(local_file, 'wb') as f:
+        print ('opened file')
+        while data_len<fsize:
+            data = client_socket.recv(BUFSIZ)
+            if not data:
+                break
+            data_len += len(data)
+            f.write(data)
+        print("Done writing file")
+    return fname, fsize
+
+def private_receive():
+    """Handles receiving of messages."""
+    while True:
+        try:
+            msg = client_socket.recv(BUFSIZ)
+            if msg == bytes("{file}", "utf8"):
+                fname, fsize = recv_file()
+            else:
+                msg = msd.decode('utf8')
+                msg_list.insert(tkinter.END, msg)
+        except OSError:  # Possibly client has left the chat.
+            break
+
 
 def receive():
     """Handles receiving of messages."""

@@ -16,6 +16,8 @@ def recv_file(client, name):
         print ('opened file')
         while data_len<fsize:
             data = client.recv(BUFSIZ)
+            if not data:
+                break
             data_len += len(data)
             f.write(data)
         print("Done writing file")
