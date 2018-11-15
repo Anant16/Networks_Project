@@ -3,6 +3,37 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 
+def recv_file(client, name):
+    print("file request from " + name)
+    fname = client.recv(BUFSIZ).decode("utf8")
+    print ("recieving file " + fname + " from " + str(name))
+    fsize = client.recv(BUFSIZ)
+    fsize = int(fsize)
+    data_len = 0
+    print("fsize: {}".format(fsize))
+    local_file = "../shared_files/" + name + '_' + fname
+    with open(local_file, 'wb') as f:
+        print ('opened file')
+        while data_len<fsize:
+            data = client.recv(BUFSIZ)
+            data_len += len(data)
+            f.write(data)
+        print("Done writing file")
+    return fname, fsize
+
+def send_file(client, name, fname, fsize):
+    print("Sending a file to " + name)
+    local_file = "../shared_files/" + fname
+    print("Opening file to send and sending...")
+    with open(local_file, 'rb') as f:
+        while True:
+            data = f.read(BUFSIZ)
+            if not data:
+                break
+            client.sendall(data)
+    print("File sent")
+
+
 
 def accept_incoming_connections():
     """Sets up handling for incoming clients."""
@@ -27,16 +58,36 @@ def handle_client(client):  # Takes client socket as argument.
     while True:
         try:
             msg = client.recv(BUFSIZ)
+            print(msg)
+            print(len(msg))
             if msg == "":
                 break
-            if msg != bytes("{quit}", "utf8"):
-                broadcast(msg, name+": ")
-            else:
+            if msg == bytes("{file}", "utf8"):
+                fname, fsize = recv_file(client, name)
+                print(fname + ": "+ str(fsize))
+                # print("file request from " + name)
+                # fname = client.recv(BUFSIZ).decode("utf8")
+                # print ("recieving file " + fname + " from " + str(name))
+                # fsize = client.recv(BUFSIZ)
+                # fsize = int(fsize)
+                # data_len = 0
+                # print("fsize: {}".format(fsize))
+                # local_file = "../shared_files/" + name + '_' + fname
+                # with open(local_file, 'wb') as f:
+                #     print ('opened file')
+                #     while data_len<fsize:
+                #         data = client.recv(BUFSIZ)
+                #         data_len += len(data)
+                #         f.write(data)
+                #     print("Done writing file")
+            elif msg == bytes("{quit}", "utf8"):
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
                 del clients[client]
                 broadcast(bytes("%s has left the chat." % name, "utf8"))
                 break
+            else:
+                broadcast(msg, name+": ")
         except OSError:
             break
 
@@ -47,7 +98,7 @@ def broadcast(msg, prefix=""):  # prefix is for name identification.
     clients_who_left = []
     for client in clients:
         try:
-            client.send(bytes(prefix, "utf8")+msg)
+            client.sendall(bytes(prefix, "utf8")+msg)
         except:
             client.close()
             print(clients[client] + " left the chat")
@@ -63,7 +114,7 @@ clients = {}
 addresses = {}
 
 HOST = ''
-PORT = 33000
+PORT = 35000
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
 
