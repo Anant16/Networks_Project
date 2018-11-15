@@ -48,7 +48,7 @@ def accept_incoming_connections():
     while True:
         client, client_address = SERVER.accept()
         print("%s:%s has connected." % client_address)
-        client.send(bytes("Greetings from the cave! Now type your name and press enter!", "utf8"))
+        client.send(bytes("Welcome to Group Chat. Now type your name and press enter!", "utf8"))
         addresses[client] = client_address
         Thread(target=handle_client, args=(client,)).start()
 
@@ -83,7 +83,8 @@ def handle_client(client):  # Takes client socket as argument.
     name = name.replace('\n', '')
     clients[client] = name
     names[name] = client
-    
+
+    time.sleep(0.5)
     update_users()
 
     while True:
@@ -214,7 +215,7 @@ addresses = {}
 names = {}
 
 HOST = ''
-PORT = 35000
+PORT = 36000
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
 

@@ -64,7 +64,10 @@ def private_receive(pmsg_list, pclient_socket):
 
 def receive():
     """Handles receiving of messages."""
+
+    buttons_frame = tkinter.Frame(top)
     while True:
+
         try:
             msg = client_socket.recv(BUFSIZ).decode("utf8")
             # print(msg)
@@ -80,10 +83,20 @@ def receive():
                 nlist = msg.split('_')[1]
                 name_list = nlist.split(',')[1:]
                 print(name_list)
+
+
+                buttons_frame.destroy()
+                buttons_frame = tkinter.Frame(top)
+                for name in name_list:
+                    private_button = tkinter.Button(buttons_frame, text=name, command=lambda user=name: create_private(user))
+                    private_button.pack(side=tkinter.LEFT)
+                buttons_frame.pack(side=tkinter.LEFT)
+
             else:
                 msg_list.insert(tkinter.END, msg)
         except OSError:  # Possibly client has left the chat.
             break
+
 
 
 def private_send(client_socket_no, pmy_msg, pmsg_list, event=None):  # event is passed by binders.
@@ -184,7 +197,7 @@ def handle_connection_request(name):
 HOST = input('Enter host: ')
 PORT = input('Enter port: ')
 if not PORT:
-    PORT = 35000
+    PORT = 36000
 else:
     PORT = int(PORT)
 if not HOST:
@@ -198,7 +211,7 @@ client_socket.connect(ADDR)
 
 
 top = tkinter.Tk()
-top.title("Chatter")
+top.title("Group Chat")
 
 uname = tkinter.Text(top)
 # uname.pack()
@@ -222,9 +235,6 @@ send_button.pack()
 
 send_file_button = tkinter.Button(top, text="Send File", command=send_file)
 send_file_button.pack()
-
-private_button = tkinter.Button(top, text="Private Chat", command=lambda: create_private("asdf"))
-private_button.pack()
 
 # top.protocol("WM_DELETE_WINDOW", on_closing)
 
