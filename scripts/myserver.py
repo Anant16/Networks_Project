@@ -95,6 +95,7 @@ def handle_client(client):  # Takes client socket as argument.
                 del clients[client]
                 del names[name]
                 broadcast(bytes("%s has left the chat." % name, "utf8"))
+                update_users()
                 break
             else:
                 broadcast(msg, name+": ")
