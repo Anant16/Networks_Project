@@ -65,6 +65,19 @@ def private_receive(pmsg_list, pclient_socket):
 def receive():
     """Handles receiving of messages."""
     while True:
+
+        # time.sleep(2)
+
+        # buttons_frame.destroy()
+
+        # time.sleep(2)
+
+        # new_buttons_frame = tkinter.Frame(top)
+        # for user in users_list:
+        #     private_button = tkinter.Button(new_buttons_frame, text=user, command=lambda name=user: create_private(name))
+        #     private_button.pack(side=tkinter.LEFT)
+        # new_buttons_frame.pack(side=tkinter.LEFT)
+
         try:
             msg = client_socket.recv(BUFSIZ).decode("utf8")
             # print(msg)
@@ -80,6 +93,7 @@ def receive():
                 msg_list.insert(tkinter.END, msg)
         except OSError:  # Possibly client has left the chat.
             break
+
 
 
 def private_send(client_socket_no, pmy_msg, pmsg_list, event=None):  # event is passed by binders.
@@ -219,8 +233,13 @@ send_button.pack()
 send_file_button = tkinter.Button(top, text="Send File", command=send_file)
 send_file_button.pack()
 
-private_button = tkinter.Button(top, text="Private Chat", command=lambda: create_private("asdf"))
-private_button.pack()
+users_list = ['asdf','fads']
+
+buttons_frame = tkinter.Frame(top)
+for user in users_list:
+    private_button = tkinter.Button(buttons_frame, text=user, command=lambda name=user: create_private(name))
+    private_button.pack(side=tkinter.LEFT)
+buttons_frame.pack(side=tkinter.LEFT)
 
 # top.protocol("WM_DELETE_WINDOW", on_closing)
 
