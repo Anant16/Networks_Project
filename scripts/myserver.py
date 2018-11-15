@@ -22,9 +22,14 @@ def recv_file(client, name):
             data_len += len(data)
             f.write(data)
         print("Done writing file")
-    return fname, fsize
+    full_fname = name + '_' + fname
+    return full_fname, fsize
 
 def send_file(client, name, fname, fsize):
+    client.send(bytes(fname, 'utf8'))
+    time.sleep(0.5)
+    client.send(bytes(str(fsize), "utf8"))
+    time.sleep(0.5)
     print("Sending a file to " + name)
     local_file = "../shared_files/" + fname
     print("Opening file to send and sending...")
@@ -168,6 +173,8 @@ def handle_private_client(client, name):  # Takes client socket as argument.
             if msg == bytes("{file}", "utf8"):
                 fname, fsize = recv_file(client, name)
                 print(fname + ": "+ str(fsize))
+                client2.send(bytes("{file}", "utf8"))
+                # send_file(client2, name2, fname, fsize)
             elif msg == bytes("{quit}", "utf8"):
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
