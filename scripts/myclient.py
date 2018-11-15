@@ -2,7 +2,10 @@
 """Script for Tkinter GUI chat client."""
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
-import tkinter
+import tkinter 
+from tkinter import filedialog, Tk
+import os
+import time
 
 def recv_file():
     print("file request from ")
@@ -24,6 +27,25 @@ def recv_file():
         print("Done writing file")
     return fname, fsize
 
+def send_file():
+    fpath = filedialog.askopenfilename(initialdir = "/",title = "Select file")
+    fname = fpath.split('/')[-1]
+    fsize = os.path.getsize(fpath)
+    client_socket.send(bytes('{file}', "utf8"))
+    time.sleep(0.5)
+    client_socket.send(bytes(fname, "utf8"))
+    time.sleep(0.5)
+    client_socket.send(bytes(str(fsize), "utf8"))
+    time.sleep(0.5)
+    with open(fpath, 'rb') as f:
+        while True:
+            data = f.read(BUFSIZ)
+            if not data:
+                break
+            client_socket.sendall(data)
+    print("File sent to server")
+    time.sleep(0.5)
+
 def private_receive(pclient_socket):
     """Handles receiving of messages."""
     while True:
@@ -38,11 +60,14 @@ def private_receive(pclient_socket):
             break
 
 
+
 def receive():
     """Handles receiving of messages."""
     while True:
         try:
             msg = client_socket.recv(BUFSIZ).decode("utf8")
+            if msg == '{quit}':
+                break
             msg_list.insert(tkinter.END, msg)
         except OSError:  # Possibly client has left the chat.
             break
@@ -54,7 +79,7 @@ def send(event=None):  # event is passed by binders.
     my_msg.set("")  # Clears input field.
     try:
         client_socket.send(bytes(msg, "utf8"))
-    except:
+    except BrokenPipeError:
         error_msg = "Unable to send"
         msg_list.insert(tkinter.END, error_msg)
     
@@ -118,6 +143,8 @@ entry_field.pack()
 send_button = tkinter.Button(top, text="Send", command=send)
 send_button.pack()
 
+send_file_button = tkinter.Button(top, text="Send File", command=send_file)
+send_file_button.pack()
 # top.protocol("WM_DELETE_WINDOW", on_closing)
 
 # #----Now comes the sockets part----

@@ -7,7 +7,7 @@ def recv_file(client, name):
     print("file request from " + name)
     fname = client.recv(BUFSIZ).decode("utf8")
     print ("recieving file " + fname + " from " + str(name))
-    fsize = client.recv(BUFSIZ)
+    fsize = client.recv(BUFSIZ).decode('utf8')
     fsize = int(fsize)
     data_len = 0
     print("fsize: {}".format(fsize))
@@ -65,28 +65,11 @@ def handle_client(client):  # Takes client socket as argument.
     while True:
         try:
             msg = client.recv(BUFSIZ)
-            print(msg)
-            print(len(msg))
             if msg == "":
                 break
             if msg == bytes("{file}", "utf8"):
                 fname, fsize = recv_file(client, name)
                 print(fname + ": "+ str(fsize))
-                # print("file request from " + name)
-                # fname = client.recv(BUFSIZ).decode("utf8")
-                # print ("recieving file " + fname + " from " + str(name))
-                # fsize = client.recv(BUFSIZ)
-                # fsize = int(fsize)
-                # data_len = 0
-                # print("fsize: {}".format(fsize))
-                # local_file = "../shared_files/" + name + '_' + fname
-                # with open(local_file, 'wb') as f:
-                #     print ('opened file')
-                #     while data_len<fsize:
-                #         data = client.recv(BUFSIZ)
-                #         data_len += len(data)
-                #         f.write(data)
-                #     print("Done writing file")
             elif msg == bytes("{quit}", "utf8"):
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
@@ -155,7 +138,7 @@ def broadcast(msg, prefix=""):  # prefix is for name identification.
             client.sendall(bytes(prefix, "utf8")+msg)
         except:
             client.close()
-            print(clients[client] + " left the chat")
+            print(clients[client] + " has left the chat")
             # del clients[client]
             clients_who_left.append(client)
 
