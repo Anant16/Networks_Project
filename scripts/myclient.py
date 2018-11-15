@@ -24,7 +24,27 @@ def recv_file():
                 break
             data_len += len(data)
             f.write(data)
-        print("Done writing file")
+        print("Done writing file at client")
+    return fname, fsize
+
+def private_recv_file(pclient_socket):
+    print("file request from ")
+    fname = pclient_socket.recv(BUFSIZ).decode("utf8")
+    print ("recieving file " + fname )
+    fsize = pclient_socket.recv(BUFSIZ)
+    fsize = int(fsize)
+    data_len = 0
+    print("fsize: {}".format(fsize))
+    local_file = "../received_files/" + fname
+    with open(local_file, 'wb') as f:
+        print ('opened file')
+        while data_len<fsize:
+            data = pclient_socket.recv(BUFSIZ)
+            if not data:
+                break
+            data_len += len(data)
+            f.write(data)
+        print("Done writing file at client")
     return fname, fsize
 
 def send_file():
@@ -46,6 +66,25 @@ def send_file():
     print("File sent to server")
     time.sleep(0.5)
 
+def private_send_file(pclient_socket):
+    fpath = filedialog.askopenfilename(initialdir = "/",title = "Select file")
+    fname = fpath.split('/')[-1]
+    fsize = os.path.getsize(fpath)
+    pclient_socket.send(bytes('{file}', "utf8"))
+    time.sleep(0.5)
+    pclient_socket.send(bytes(fname, "utf8"))
+    time.sleep(0.5)
+    pclient_socket.send(bytes(str(fsize), "utf8"))
+    time.sleep(0.5)
+    with open(fpath, 'rb') as f:
+        while True:
+            data = f.read(BUFSIZ)
+            if not data:
+                break
+            pclient_socket.sendall(data)
+    print("File sent to server")
+    time.sleep(0.5)
+
 def private_receive(pmsg_list, pclient_socket):
     """Handles receiving of messages."""
     # pmsg_list = ptop.messages_frame.msg_list
@@ -53,7 +92,7 @@ def private_receive(pmsg_list, pclient_socket):
         try:
             msg = pclient_socket.recv(BUFSIZ)
             if msg == bytes("{file}", "utf8"):
-                fname, fsize = recv_file()
+                fname, fsize = private_recv_file(pclient_socket)
             else:
                 msg = msg.decode('utf8')
                 pmsg_list.insert(tkinter.END, msg)
@@ -171,7 +210,7 @@ def private_client(name):
     send_button = tkinter.Button(ptop, text="Send", command=lambda: private_send(pclient_socket, entry_field, msg_list))
     send_button.pack()
 
-    send_file_button = tkinter.Button(ptop, text="Send File", command=send_file)
+    send_file_button = tkinter.Button(ptop, text="Send File", command= lambda: private_send_file(pclient_socket))
     send_file_button.pack()
 
     receive_thread = Thread(target=private_receive, args=(msg_list, pclient_socket,))

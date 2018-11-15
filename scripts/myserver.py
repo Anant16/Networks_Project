@@ -93,6 +93,7 @@ def handle_client(client):  # Takes client socket as argument.
             if msg == "":
                 break
             if msg == bytes("{file}", "utf8"):
+                print("group client")
                 fname, fsize = recv_file(client, name)
                 print(fname + ": "+ str(fsize))
             elif msg == bytes("{quit}", "utf8"):
@@ -126,6 +127,7 @@ def handle_private_client(client, name):  # Takes client socket as argument.
         print(name)
         clients[client] = name
         names[name] = client
+        name2p = name2 + '_' + name1
 
     else:
         name1, name2 = name.split('_');
@@ -172,10 +174,13 @@ def handle_private_client(client, name):  # Takes client socket as argument.
             if msg == "":
                 break
             if msg == bytes("{file}", "utf8"):
+                print(clients[client])
+                print(name)
                 fname, fsize = recv_file(client, name)
                 print(fname + ": "+ str(fsize))
                 client2.send(bytes("{file}", "utf8"))
-                # send_file(client2, name2, fname, fsize)
+                time.sleep(0.5)
+                send_file(client2, name2p, fname, fsize)
             elif msg == bytes("{quit}", "utf8"):
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
