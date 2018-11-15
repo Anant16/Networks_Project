@@ -51,11 +51,16 @@ def handle_client(client):  # Takes client socket as argument.
     """Handles a single client connection."""
 
     name = client.recv(BUFSIZ).decode("utf8")
+    if('_' in name):
+        Thread(target=handle_private_client, args=(client, name,)).start()
+        return
+
     welcome = 'Welcome %s! If you ever want to quit, type {quit} to exit.' % name
     client.send(bytes(welcome, "utf8"))
     msg = "%s has joined the chat!" % name
     broadcast(bytes(msg, "utf8"))
     clients[client] = name
+    names[name] = client
 
     while True:
         try:
@@ -86,6 +91,7 @@ def handle_client(client):  # Takes client socket as argument.
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
                 del clients[client]
+                del names[name]
                 broadcast(bytes("%s has left the chat." % name, "utf8"))
                 break
             else:
@@ -93,6 +99,52 @@ def handle_client(client):  # Takes client socket as argument.
         except OSError:
             break
 
+def handle_private_client(client, name):  # Takes client socket as argument.
+    """Handles a single private client connection."""
+
+    if name[-1] == '_':
+        name = name[:-1]
+        name1, name2 = name.split('_');
+
+    else:
+        name1, name2 = name.split('_');
+        msg = "%s wants to connect with you. Are you ready? (Yes/No)" % name1
+        client2 = names[name2]
+        client2.send(bytes(msg, "utf8"))
+
+        msg = client2.recv(BUFSIZ)
+        if msg == bytes("Yes", "utf8"):
+            msg = "%s is ready for connection. Please go ahead." % name2
+            client.send(bytes(msg, "utf8"))
+        else:
+            msg = "%s is not available for connection now. Please try later." % name2
+            client.send(bytes(msg, "utf8"))
+            return
+
+    clients[client] = name
+    names[name] = client
+
+    while True:
+        try:
+            msg = client.recv(BUFSIZ)
+            print(msg)
+            print(len(msg))
+            if msg == "":
+                break
+            if msg == bytes("{file}", "utf8"):
+                fname, fsize = recv_file(client, name)
+                print(fname + ": "+ str(fsize))
+            elif msg == bytes("{quit}", "utf8"):
+                client.send(bytes("{quit}", "utf8"))
+                client.close()
+                del clients[client]
+                del names[name]
+                broadcast(bytes("%s has left the chat." % name, "utf8"))
+                break
+            else:
+                client2.send(bytes(msg, "utf8"))
+        except OSError:
+            break
 
 def broadcast(msg, prefix=""):  # prefix is for name identification.
     """Broadcasts a message to all the clients."""
@@ -114,6 +166,7 @@ def broadcast(msg, prefix=""):  # prefix is for name identification.
         
 clients = {}
 addresses = {}
+names = {}
 
 HOST = ''
 PORT = 35000

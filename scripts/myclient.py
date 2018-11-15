@@ -24,11 +24,11 @@ def recv_file():
         print("Done writing file")
     return fname, fsize
 
-def private_receive():
+def private_receive(pclient_socket):
     """Handles receiving of messages."""
     while True:
         try:
-            msg = client_socket.recv(BUFSIZ)
+            msg = pclient_socket.recv(BUFSIZ)
             if msg == bytes("{file}", "utf8"):
                 fname, fsize = recv_file()
             else:
@@ -62,6 +62,15 @@ def send(event=None):  # event is passed by binders.
         client_socket.close()
         top.quit()
     
+def create_private(name):
+    Thread(target=private_client, args=(name,)).start()
+
+def private_client(name):
+    pclient_socket = socket(AF_INET, SOCK_STREAM)
+    pclient_socket.connect(ADDR)
+
+    ptop = tkinter.Tk()
+    ptop.title("Private Chat")
 
 
 # def on_closing(event=None):
