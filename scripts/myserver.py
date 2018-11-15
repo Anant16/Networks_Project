@@ -220,7 +220,7 @@ addresses = {}
 names = {}
 
 HOST = ''
-PORT = 36000
+PORT = 35000
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
 

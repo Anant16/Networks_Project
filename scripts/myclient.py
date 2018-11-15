@@ -92,10 +92,15 @@ def private_receive(pmsg_list, pclient_socket):
         try:
             msg = pclient_socket.recv(BUFSIZ)
             if msg == bytes("{file}", "utf8"):
+                pmsg_list.insert(tkinter.END, "Receiving File")
                 fname, fsize = private_recv_file(pclient_socket)
+                pmsg_list.insert(tkinter.END, "File Recieved")
+            elif msg == bytes("{quit}", "utf8"):
+                break
             else:
                 msg = msg.decode('utf8')
                 pmsg_list.insert(tkinter.END, msg)
+
         except OSError:  # Possibly client has left the chat.
             break
 
@@ -189,7 +194,7 @@ def private_client(name):
     pclient_socket.send(bytes(name, "utf8"))
 
     ptop = tkinter.Tk()
-    ptop.title("Private Chat")
+    ptop.title("Private Chat - " + uname.get('1.0', tkinter.END))
 
     messages_frame = tkinter.Frame(ptop)
     my_msg = tkinter.StringVar()  # For the messages to be sent.
@@ -236,7 +241,7 @@ def handle_connection_request(name):
 HOST = input('Enter host: ')
 PORT = input('Enter port: ')
 if not PORT:
-    PORT = 36000
+    PORT = 35000
 else:
     PORT = int(PORT)
 if not HOST:
