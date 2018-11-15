@@ -2,6 +2,7 @@
 """Server for multithreaded (asynchronous) chat application."""
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
+import time
 
 def recv_file(client, name):
     print("file request from " + name)
@@ -51,7 +52,14 @@ def handle_client(client):  # Takes client socket as argument.
     """Handles a single client connection."""
 
     name = client.recv(BUFSIZ).decode("utf8")
+    msg = "{name}_%s" % name
+    print(msg)
+    client.send(bytes(msg, "utf8"))
+    time.sleep(1)
+    
+    print("client detected: " + name)
     if('_' in name):
+        print("private request : " + name)
         Thread(target=handle_private_client, args=(client, name,)).start()
         return
 
@@ -59,6 +67,7 @@ def handle_client(client):  # Takes client socket as argument.
     client.send(bytes(welcome, "utf8"))
     msg = "%s has joined the chat!" % name
     broadcast(bytes(msg, "utf8"))
+    name = name.replace('\n', '')
     clients[client] = name
     names[name] = client
 
@@ -84,28 +93,59 @@ def handle_client(client):  # Takes client socket as argument.
 
 def handle_private_client(client, name):  # Takes client socket as argument.
     """Handles a single private client connection."""
-
+    print("Private client is: " + name)
     if name[-1] == '_':
+        print("response of request")
         name = name[:-1]
         name1, name2 = name.split('_');
+        print("names: " + name1 + " " + name2)
+        client2 = names[name2 + '_' + name1]
+
+        msg = "%s is ready for connection. Please go ahead." % name1
+        client2.send(bytes(msg, "utf8"))
+        print(client2)
+        name = name.replace('\n', '')
+        print("Updating tables: if")
+        print(name)
+        clients[client] = name
+        names[name] = client
 
     else:
         name1, name2 = name.split('_');
-        msg = "%s wants to connect with you. Are you ready? (Yes/No)" % name1
+        print("pr request in : " + name1 + " - " + name2)
+        msg = '{prequest}_' + name1
         client2 = names[name2]
         client2.send(bytes(msg, "utf8"))
+        
+        name = name.replace('\n', '')
+        print("Updating tables: else")
+        print(name)
+        clients[client] = name
+        names[name] = client
 
-        msg = client2.recv(BUFSIZ)
-        if msg == bytes("Yes", "utf8"):
-            msg = "%s is ready for connection. Please go ahead." % name2
-            client.send(bytes(msg, "utf8"))
-        else:
-            msg = "%s is not available for connection now. Please try later." % name2
-            client.send(bytes(msg, "utf8"))
+        name2p = name2 + '_' + name1
+        count = 10
+        while count > 0:
+            if name2p in names:
+                client2 = names[name2p]
+                break
+            else:
+                time.sleep(1)
+            count -=1
+        if count == 0:
+            client.send(bytes("{quit}", "utf8"))
+            client.close()
+            del clients[client]
+            del names[name]
             return
-
-    clients[client] = name
-    names[name] = client
+        # msg = client2.recv(BUFSIZ)
+        # if msg == bytes("Yes", "utf8"):
+        #     msg = "%s is ready for connection. Please go ahead." % name2
+        #     client.send(bytes(msg, "utf8"))
+        # else:
+        #     msg = "%s is not available for connection now. Please try later." % name2
+        #     client.send(bytes(msg, "utf8"))
+        #     return
 
     while True:
         try:
@@ -122,10 +162,12 @@ def handle_private_client(client, name):  # Takes client socket as argument.
                 client.close()
                 del clients[client]
                 del names[name]
-                broadcast(bytes("%s has left the chat." % name, "utf8"))
+                client2.send(bytes("%s has left the chat." % name1, "utf8"))
                 break
             else:
-                client2.send(bytes(msg, "utf8"))
+                print(msg)
+                client2.send(bytes(name1 + ": ", "utf8") + msg)
+                client.send(bytes(name1 + ": ", "utf8") + msg)
         except OSError:
             break
 
@@ -134,6 +176,8 @@ def broadcast(msg, prefix=""):  # prefix is for name identification.
 
     clients_who_left = []
     for client in clients:
+        if '_' in clients[client]:
+            continue
         try:
             client.sendall(bytes(prefix, "utf8")+msg)
         except:
