@@ -47,6 +47,14 @@ def accept_incoming_connections():
         addresses[client] = client_address
         Thread(target=handle_client, args=(client,)).start()
 
+def update_users():
+    name_list = "{namelist}_"
+    for client in clients:
+        if '_' in clients[client]:
+            continue
+        name_list += "," + clients[client]
+    broadcast(bytes(name_list, 'utf8'))
+
 
 def handle_client(client):  # Takes client socket as argument.
     """Handles a single client connection."""
@@ -70,6 +78,8 @@ def handle_client(client):  # Takes client socket as argument.
     name = name.replace('\n', '')
     clients[client] = name
     names[name] = client
+    
+    update_users()
 
     while True:
         try:
@@ -85,6 +95,7 @@ def handle_client(client):  # Takes client socket as argument.
                 del clients[client]
                 del names[name]
                 broadcast(bytes("%s has left the chat." % name, "utf8"))
+                update_users()
                 break
             else:
                 broadcast(msg, name+": ")

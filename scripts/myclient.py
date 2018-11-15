@@ -83,12 +83,16 @@ def receive():
             # print(msg)
             if msg == '{quit}':
                 break
-            elif '{prequest}' in msg:
+            elif '{prequest}' in msg[0:12]:
                 name = msg[11:]
                 handle_connection_request(name)
-            elif '{name}' in msg:
+            elif '{name}' in msg[0:6]:
                 print(msg)
                 uname.insert(tkinter.END, msg[7:])
+            elif '{namelist}' in msg[0:12]:
+                nlist = msg.split('_')[1]
+                name_list = nlist.split(',')[1:]
+                print(name_list)
             else:
                 msg_list.insert(tkinter.END, msg)
         except OSError:  # Possibly client has left the chat.
